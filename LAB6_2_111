@@ -1,0 +1,66 @@
+// MAAZ HUSSAIN LAB6 TASK2
+class Printer {
+    private int totalPages = 10;
+
+    public synchronized void print(int pages) {
+        System.out.println("Requested to print " + pages + " pages.");
+        while (pages > totalPages) {
+            System.out.println("Not enough pages in the tray. Waiting for refill...");
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
+        }
+
+        totalPages -= pages;
+        System.out.println("Printed " + pages + " pages. Remaining pages: " + totalPages);
+    }
+
+    public synchronized void refill(int pages) {
+        System.out.println("Refilling with " + pages + " pages.");
+        totalPages += pages;
+        System.out.println("Total pages after refill: " + totalPages);
+        notifyAll();
+    }
+}
+
+class PrintThread extends Thread {
+    private Printer printer;
+    private int pages;
+
+    public PrintThread(Printer printer, int pages) {
+        this.printer = printer;
+        this.pages = pages;
+    }
+
+    public void run() {
+        printer.print(pages);
+    }
+}
+
+class RefillThread extends Thread {
+    private Printer printer;
+    private int pages;
+
+    public RefillThread(Printer printer, int pages) {
+        this.printer = printer;
+        this.pages = pages;
+    }
+
+    public void run() {
+        printer.refill(pages);
+    }
+}
+
+public class PrinterJob {
+    public static void main(String[] args) {
+        Printer printer = new Printer();
+
+        PrintThread printJob = new PrintThread(printer, 15);
+        RefillThread refillJob = new RefillThread(printer, 10);
+
+        printJob.start();
+        refillJob.start();
+    }
+}
