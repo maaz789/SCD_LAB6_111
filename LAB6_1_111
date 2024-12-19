@@ -1,0 +1,59 @@
+//MAAZ HUSSAIN LAB6 TASK1 
+class JointAccount {
+    private int balance = 50000;
+
+    public synchronized void withdraw(String user, int amount) {
+        System.out.println(user + " wants to withdraw: " + amount);
+        if (amount > balance) {
+            System.out.println(user + " tries to withdraw but insufficient balance. Waiting for deposit...");
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
+        }
+
+        if (amount <= balance) {
+            balance -= amount;
+            System.out.println(user + " successfully withdrew: " + amount);
+            System.out.println("Remaining balance: " + balance);
+        } else {
+            System.out.println(user + " withdrawal failed due to insufficient funds.");
+        }
+    }
+
+    public synchronized void deposit(String user, int amount) {
+        System.out.println(user + " deposits: " + amount);
+        balance += amount;
+        System.out.println("Updated balance: " + balance);
+        notifyAll();
+    }
+}
+
+class User extends Thread {
+    private JointAccount account;
+    private String userName;
+    private int amount;
+
+    public User(JointAccount account, String userName, int amount) {
+        this.account = account;
+        this.userName = userName;
+        this.amount = amount;
+    }
+
+    public void run() {
+        account.withdraw(userName, amount);
+    }
+}
+
+public class BankAccount {
+    public static void main(String[] args) {
+        JointAccount account = new JointAccount();
+
+        User userA = new User(account, "User A", 45000);
+        User userB = new User(account, "User B", 20000);
+
+        userA.start();
+        userB.start();
+    }
+}
